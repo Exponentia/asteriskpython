@@ -113,10 +113,12 @@ class Translator(object):
         
         Name maps and file format specifications can be found here:
         https://www.microsoft.com/cognitive-services/en-us/speech-api/documentation/api-reference-rest/bingvoiceoutput
-        """
-        
+        """        
         namemap = {
             "ar-EG,Female" : "Microsoft Server Speech Text to Speech Voice (ar-EG, Hoda)",
+#            "hi-IN,Female" : "Microsoft Server Speech Text to Speech Voice (hi-IN, Kalpana)",
+            "hi-IN,Female" : "Microsoft Server Speech Text to Speech Voice (hi-IN, Kalpana, Apollo)",
+            "hi-IN,Male" : "Microsoft Server Speech Text to Speech Voice (hi-IN, Hemant)",
             "de-DE,Female" : "Microsoft Server Speech Text to Speech Voice (de-DE, Hedda)",
             "de-DE,Male" : "Microsoft Server Speech Text to Speech Voice (de-DE, Stefan, Apollo)",
             "en-AU,Female" : "Microsoft Server Speech Text to Speech Voice (en-AU, Catherine)",

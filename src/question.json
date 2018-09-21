@@ -1,0 +1,18 @@
+{
+"Question":
+    [
+    { "body":"yes",
+      "path":"",
+      "answer":"",
+      "type":"Text",
+      "stage":"0"
+    },
+    { "body":"no",
+      "path":"/home/admin1/Desktop/dev/VoIPBot/src/voice/NonRPC.wav",
+      "answer":"",
+      "type":"Text",
+      "stage":"1"
+    }
+    ],
+    "title":"Welcome"
+}

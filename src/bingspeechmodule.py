@@ -79,6 +79,7 @@ class BingSpeech():
                             headers=headers)
         val = json.loads(resp.text)
         print val
+        print "%"*5000
 
 #        val = json.loads(resp.text)
         # Return user utterance in text

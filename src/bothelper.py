@@ -3,10 +3,14 @@ import clipaudiomodule as ca
 import bingspeechmodule as bs
 import bingttsmodule as bt
 import luismodule as luis
-
+import response_checking
+from pydub import AudioSegment
 class BotHelper():
 
     def convert_audio(self):
+		sound = AudioSegment.from_wav('input.wav')
+		sound = sound +10
+		sound.export("input.wav","wav")
 		myfile = sf.SoundFile('input.wav',mode='r',format='RAW',samplerate=16000,channels=1,subtype='PCM_16')
 		sf.write('converted.wav',myfile.read(),16000,subtype='PCM_16',format='WAV')
 
@@ -16,7 +20,7 @@ class BotHelper():
 		trimmer.trim_audio('converted.wav') 
 
     def recognize_speech(self):
-		spr = bs.BingSpeech('8da7757036a14bcf8896e36788700c28')
+		spr = bs.BingSpeech('a6e2cf9447e64d4497b2715e511fc027')
 		# Take from trimmed data
 		res = spr.transcribe('trimmed.wav')
 		print res
@@ -24,20 +28,20 @@ class BotHelper():
 
     def get_response(self):
 		# speech to text
-		translator = bt.Translator('8da7757036a14bcf8896e36788700c28')
+		translator = bt.Translator('a6e2cf9447e64d4497b2715e511fc027')
 		text = self.recognize_speech()
-		# get bot response
-		#reply = luis.get_luis_response(text)
-		reply = "I am good"
-		print text
-		print "3"*30
-		print "3"*30
-		# text to speech
-		output = translator.speak(reply, "en-US", "Female", "riff-16khz-16bit-mono-pcm")
-		with open("botresponse.wav", "w") as f:
-				f.write(output)
+		print text,"@#"*20
+
+        # get bot response
+#		reply = response_checking.text_got(text)
+        # text to speech
+		return text
+#		output = translator.speak(reply, "hi-IN", "Male", "riff-16khz-16bit-mono-pcm")
+#		with open("botresponse.wav", "w") as f:
+#				f.write(output)
 
     def generate_response(self):
 		self.convert_audio()
 		self.trim_audio()
-		self.get_response()
+		answer = self.get_response()
+		return answer

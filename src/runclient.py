@@ -8,7 +8,9 @@ current_call = None
 recorderid = None
 playerid = None
 call_slot = None
-
+dt=[]
+verify = 0
+ip = "asterisk.westindia.cloudapp.azure.com"
 def log_cb(level, str, len):
     print str,
 
@@ -34,25 +36,99 @@ class MyAccountCallback(pj.AccountCallback):
 	    return
 
 	print "Incoming call from ", call.info().remote_uri
-
+	
 	current_call = call
 
 	call_cb = MyCallCallback(current_call)
 	current_call.set_callback(call_cb)
-
+#	call.transfer('sip:7002 at 192.168.0.204')
 	current_call.answer(180)
 	# Hold ringing tone for 3 seconds
-	time.sleep(3)
-	current_call.answer(200)
-	print "@"*20
-    
+#	time.sleep(3)
+	current_call.answer(200)    
 	dir(current_call)
 	time.sleep(2)
-	current_call.dial_dtmf("1")
 	# Listen to user and respond
 	listen_and_respond()
 #import datetime
+import os
+import soundfile as sf
+import response_checking
+import aws_polly
 def listen_and_respond():
+    global current_call
+    aws_polly.text_to_voice("Good Evening... My name is Singularity.... and this is a verification call on behalf of HDFC Life for your Secure your life plan..., purchased from HDFC Bank recently. May I speak to... Ankur Jyoti please","Raveena")
+#    aws_polly.text_to_voice("Good Evening","Raveena")
+    play_recording("output.wav",call_slot)
+    try:
+        text = recorder(call_slot)
+        reply = response_checking.text_got(text)
+    except:
+        reply = None
+    print reply
+    print "11"*10
+    if reply == "1":
+        nextquestion(call_slot)
+    elif reply == "2":
+        end_the_call(call_slot)
+    else:
+        get_dtmf_answer(call_slot)
+    current_call.hangup()
+    current_call =None
+    
+def play_recording(Audiofile,call_slot):
+    playerid = lib.create_player(Audiofile,loop=False)
+    playerslot = lib.player_get_slot(playerid)
+    f = sf.SoundFile(Audiofile)
+    # Connect the audio player to the call
+    lib.conf_connect(playerslot,call_slot)
+    time.sleep((int(len(f) / f.samplerate))+2)    
+    
+def nextquestion(call_slot):
+    aws_polly.text_to_voice("Ankur jyoti,  we are happy to welcome you to the HDFC Life family...","Raveena")
+    play_recording("output.wav",call_slot)
+    aws_polly.text_to_voice("Sir..., please note this call may be recorded for our internal quality and training purposes.,","Raveena")
+    play_recording("output.wav",call_slot)
+    aws_polly.text_to_voice("For security purpose, please confirm your Date of Birth","Raveena")
+    play_recording("output.wav",call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.dob(text)
+    except:
+        answer = None
+    print answer
+    if answer == "1":
+         verified_phone(call_slot)
+#        aws_polly.text_to_voice("Sir.., please also confirm your mailing address with the pin code.","Raveena")
+#        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        text = recorder(call_slot)
+#        answer = response_checking.dob(text)
+        
+    else:
+        aws_polly.text_to_voice("I am sorry, i didn't get that. Please use your phone touch pad and enter your date of birth. For example, if your date of birth is 31st August 1986 then press 3... 1... 0... 8... 1... 9... 8... 6... ","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        sorry_intent(call_slot)
+        get_dob_dtmf(call_slot)
+        
+    
+def end_the_call(call_slot):
+    play_recording("./voice/NonRPC.wav",call_slot)
+    global current_call
+    try:
+        answer = recorder(call_slot)
+        print answer
+    except:
+        aws_polly.text_to_voice("I am sorry, i didn't get that Please repeat that","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+        try:
+            answer = recorder(call_slot)
+            print answer
+        except:
+            saleguywillcallback(call_slot)
+    play_recording("./voice/thanksyoucallbacklater.wav",call_slot)
+
+def recorder(call_slot):
+    print "recording started"
     recorderid = lib.create_recorder("/home/admin1/Desktop/dev/VoIPBot/src/input.wav")
     recorderslot = lib.recorder_get_slot(recorderid)
 
@@ -60,43 +136,207 @@ def listen_and_respond():
     lib.conf_connect(0, recorderslot)
     lib.conf_connect(call_slot, recorderslot)
     signal_while_active_call = []
-    while True:
+    signal = 0
+    while signal < 15:
         time.sleep(0.1)
-#        lib.on_dtmf_digit()
-#        choice = sys.stdin.readline()
-#        print choice
-        signal_while_active_call.append(lib.conf_get_signal_level(recorderslot))
-        print signal_while_active_call[-100:] < [(0.01,0.01) for x in range(100)]
-#        print signal_while_active_call[-100:] , [(0.01,0.01) for x in range(100)]
-        if signal_while_active_call[-100:] < [(0.01,0.01) for x in range(100)]:
+        print lib.conf_get_signal_level(recorderslot)
+#        print lib.conf_get_signal_level(recorderslot)[0] > 0.1
+        if lib.conf_get_signal_level(recorderslot)[0]>0.12:
+            tone = True
+            signal +=1
             break
+    lower_flag=0
+    increament=0
+    while tone:            
+        time.sleep(0.1)
+        if lib.conf_get_signal_level(recorderslot)[0]<0.12:
+            print increament, lib.conf_get_signal_level(recorderslot)
+            increament=increament+1
+            if increament>20:
+                break
+        else:
+            increament=0
+#        signal_while_active_call.append(lib.conf_get_signal_level(recorderslot))
+#        print signal_while_active_call[-100:] < [(0.1,0.00) for x in range(100)]
+
+#        new_list = []
+#        for x in range(100):
+#            new_list.append((0.1,0.0))
+#        print signal_while_active_call[-20:]
+#        if signal_while_active_call[-100:] < new_list:
+#            signal_while_active_call = []
+#            break
 
     print "#"*80
-#    while True:
-#        time.sleep(2)    
-#        with open("/home/admin1/Desktop/dev/VoIPBot/src/input.wav" ,'r') as f:
-#            print f.readlines()
-#            with open("/home/admin1/Desktop/dev/VoIPBot/src/input1.wav")
     lib.recorder_destroy(recorderid)
     mybot = bot.BotHelper()
-    mybot.generate_response()
+    answer = mybot.generate_response()
+    print answer,"form recorder"
+    return answer
 
-    # Play wav file back to user
+def get_dob_dtmf(call_slot):
+    global dt
+    print dt
+    while True:
+        if len(dt) >= 8:
+            break
+        print dt
+    dob = "".join(str(x) for x in dt)
+    print dob,"$ richie rich"
+    print type(dob)
+    if dob=="31081986":
+        dt=[]
+        verified_phone(call_slot)
+    else:
+        unverified_dob(call_slot)
 
-    #playerid = lib.create_player("/home/admin1/Desktop/dev/VoIPBot/src/39846769.wav",loop=False)
-    playerid = lib.create_player("/home/admin1/Desktop/dev/VoIPBot/src/botresponse.wav",loop=False)
-    playerslot = lib.player_get_slot(playerid)
-    # Connect the audio player to the call
-    lib.conf_connect(playerslot,call_slot)
+#def verified_dob(call_slot):
+#    play_recording("./voice/address.wav",call_slot)
+#    answer = recorder(call_slot)
+#    print answer
+#    if answer == "yes":
+#        verified_phone(call_slot)
+#    else:
+#        unverified_address(call_slot)
+def verified_phone(call_slot):
+    aws_polly.text_to_voice("Sir.., please also confirm your phone number.","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.phonenumber(text)
+    except:
+        answer = None
+    if answer == "1":
+        verify_email(call_slot)
+    else:
+        get_dtmf_phone(call_slot)
+#        play_recording("./voice/unabletoverify.wav")
 
-	# Wait for the thing to be read for a few seconds then hang up
-    time.sleep(13)
-    
-    
-
+def verify_email(call_slot):
+    global verify
+    if verify < 1:
+        aws_polly.text_to_voice("Sir.., please confirm your email address.","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+        try:
+            text = recorder(call_slot)
+            answer = response_checking.email(text)
+        except:
+            answer = None
+        if answer == "1":
+            verified_everything(call_slot)
+        else:
+            aws_polly.text_to_voice("I didn't get that , please try again","Raveena")
+            play_recording("output.wav",call_slot)#        next_question(call_slot)
+            #verify_email(call_slot)
+            try:
+                text = recorder(call_slot)
+                answer = response_checking.email(text)
+            except:
+                answer = None
+            if answer == "1":
+                verified_everything(call_slot)                
+                verify += 1
+            else:
+                aws_polly.text_to_voice("I am sorry, I am unable to verify","Raveena")
+                play_recording("output.wav",call_slot)#        next_question(call_slot)
+                saleguywillcallback(call_slot)        
+    else:
+        aws_polly.text_to_voice("I am sorry, I am unable to verify","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+        saleguywillcallback(call_slot)        
+def verified_everything(call_slot):
+    aws_polly.text_to_voice("The premium amount is INR 20,000 which you need to pay for 10 years. The next premium will be due after every 3 months from the policy issue date. We request you to pay the premium for the entire term. In absence of same fund value may impact due to charges applicable.","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    aws_polly.text_to_voice("Sir, I would also like to inform you that life insurance is a stand alone product and is neither a fixed deposit nor loan nor is it linked to any other banking products. to confirm the policy say, I agree... else no","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.agree(text)
+    except:
+        answer = None
+    if answer == "1":
+        thankyouintent(call_slot)
+    elif answer == "2":
+        saleguywillcallback(call_slot)
+    else:
+        get_dtmf_confirmation(call_slot)
+def get_dtmf_confirmation(call_slot):
+#    def get_dtmf_answer(call_slot):
+    global dt
+    aws_polly.text_to_voice("Please press 1 for yes and press 2 for no or to speak to a representative press 0","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+#    print dt
+    while True:
+        if len(dt) >= 1:
+            break
+        print dt
+    if dt[0] == "1":
+        dt =[]
+        thankyouintent(call_slot)
+    elif dt[0] == "2":
+        dt = []
+        saleguywillcallback(call_slot)
+    elif dt[0] == "0":
+        dt=[]
+        transfer_to_agent()
+def thankyouintent(call_slot):
+    aws_polly.text_to_voice("Sir, We take your agreements to the terms of the policy and verification is completed. Thank you for your valuable time. Have a great day","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    global current_call
     current_call.hangup()
+    resetAll()
+def saleguywillcallback(call_slot):
+    aws_polly.text_to_voice("One of our sale representative will call back to resolve your query , Thank you have a great day","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    global current_call
+    current_call.hangup()
+    resetAll()
     
+def unverified_address(call_slot):
+    play_recording("./voice/unabletoverify.wav",call_slot)
 
+def unverified_dob(call_slot):
+    play_recording("./voice/invaliddob.wav",call_slot)
+    saleguywillcallback(call_slot)
+def transfer_to_agent():
+    global current_call
+    global ip
+    current_call.transfer("sip:7003@"+ip)
+def get_dtmf_phone(call_slot):
+    global dt
+    aws_polly.text_to_voice("I am sorry, Please use your phone touch pad and enter your 10 digits phone number","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    while True:
+        if len(dt) >= 10:
+            break
+        print dt
+    phone = "".join(str(x) for x in dt)
+    if phone=="9920482274":
+        dt = []
+        verify_email(call_slot)
+    else:
+        unverified_phone(call_slot)
+def unverified_phone(call_slot):
+    pass
+def get_dtmf_answer(call_slot):
+    global dt
+    play_recording("./voice/Option.wav",call_slot)
+    time.sleep(3)    
+#    print dt
+    while True:
+        if len(dt) >= 1:
+            break
+        print dt
+    if dt[0] == "1":
+        dt =[]
+        nextquestion(call_slot)
+    elif dt[0] == "2":
+        dt = []
+        end_the_call(call_slot)
+    elif dt[0] == "0":
+        dt=[]
+        transfer_to_agent()
+    
 class MyCallCallback(pj.CallCallback):
 
     def __init__(self, call=None):
@@ -115,6 +355,14 @@ class MyCallCallback(pj.CallCallback):
 			print 'Current call is', current_call
     def onDtmfDigit(self,prm):
         print prm
+    def on_dtmf_digit(self, digits):
+        #print "hello"
+        global dt
+        print digits
+        dt.append(digits)
+        #self.sHelper.dtmf_queue = self.sHelper.dtmf_queue + digits
+        #self.sHelper.send_dtmf(digits)
+        print "received"
     def on_media_state(self):
 		global speech_rec
 		global recorderid
@@ -156,7 +404,7 @@ try:
     lib.start()
 
 	# Put your sIP client credentials here
-    acc = lib.create_account(pj.AccountConfig("192.168.0.201", "7003", "123"))
+    acc = lib.create_account(pj.AccountConfig(ip, "7001", "123"))
 
     acc_cb = MyAccountCallback(acc)
     acc.set_callback(acc_cb)
