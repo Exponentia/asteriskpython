@@ -37,7 +37,7 @@ class Translator(object):
     """
     Implements API for the Microsoft Translator service
     """
-    auth_host = 'api.cognitive.microsoft.com'
+    auth_host = 'westus.api.cognitive.microsoft.com'
     auth_path = '/sts/v1.0/issueToken'
     base_host = 'speech.platform.bing.com'
     base_path = ''

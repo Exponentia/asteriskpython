@@ -5,6 +5,7 @@ import bingttsmodule as bt
 import luismodule as luis
 import response_checking
 from pydub import AudioSegment
+
 class BotHelper():
 
     def convert_audio(self):
@@ -20,7 +21,7 @@ class BotHelper():
 		trimmer.trim_audio('converted.wav') 
 
     def recognize_speech(self):
-		spr = bs.BingSpeech('a6e2cf9447e64d4497b2715e511fc027')
+		spr = bs.BingSpeech('9b512a1bc1514b0e9042ac8f07facdf5')
 		# Take from trimmed data
 		res = spr.transcribe('trimmed.wav')
 		print res
@@ -28,7 +29,7 @@ class BotHelper():
 
     def get_response(self):
 		# speech to text
-		translator = bt.Translator('a6e2cf9447e64d4497b2715e511fc027')
+		translator = bt.Translator('9b512a1bc1514b0e9042ac8f07facdf5')
 		text = self.recognize_speech()
 		print text,"@#"*20
 

@@ -2,15 +2,24 @@ import sys
 import pjsua as pj
 import threading
 import bothelper as bot
+import time 
 import time
+import bing_speach
+import sys
 
 current_call = None
 recorderid = None
 playerid = None
 call_slot = None
 dt=[]
+#userid = sys.argv[1]
+
+
 verify = 0
-ip = "asterisk.westindia.cloudapp.azure.com"
+ip = "13.71.90.171"
+#ip = "192.168.0.165"
+#ip = "192.168.43.173"
+#ip = "ethotic.cc.ownpages.com"
 def log_cb(level, str, len):
     print str,
 
@@ -60,11 +69,18 @@ def listen_and_respond():
     aws_polly.text_to_voice("Good Evening... My name is Singularity.... and this is a verification call on behalf of HDFC Life for your Secure your life plan..., purchased from HDFC Bank recently. May I speak to... Ankur Jyoti please","Raveena")
 #    aws_polly.text_to_voice("Good Evening","Raveena")
     play_recording("output.wav",call_slot)
-    try:
-        text = recorder(call_slot)
-        reply = response_checking.text_got(text)
-    except:
-        reply = None
+#    try:
+#        text = recorder(call_slot)
+#        print "#"*20
+#        print text
+#        reply = response_checking.text_got(text)
+#        print reply,"%"*20
+#    except:
+#        reply = None
+    text = recorder(call_slot)
+    print text
+    reply = response_checking.text_got(text)
+    
     print reply
     print "11"*10
     if reply == "1":
@@ -85,11 +101,36 @@ def play_recording(Audiofile,call_slot):
     time.sleep((int(len(f) / f.samplerate))+2)    
     
 def nextquestion(call_slot):
-    aws_polly.text_to_voice("Ankur jyoti,  we are happy to welcome you to the HDFC Life family...","Raveena")
+    aws_polly.text_to_voice("Ankur jyoti,  we are happy to welcome you to the HDFC Life family...Sir..., please note this call may be recorded for our internal quality and training purposes.,For security purpose, please confirm your Date of Birth","Raveena")
     play_recording("output.wav",call_slot)
-    aws_polly.text_to_voice("Sir..., please note this call may be recorded for our internal quality and training purposes.,","Raveena")
-    play_recording("output.wav",call_slot)
-    aws_polly.text_to_voice("For security purpose, please confirm your Date of Birth","Raveena")
+#    aws_polly.text_to_voice("Sir..., please note this call may be recorded for our internal quality and training purposes.,","Raveena")
+#    play_recording("output.wav",call_slot)
+#    aws_polly.text_to_voice("For security purpose, please confirm your Date of Birth","Raveena")
+#    play_recording("output.wav",call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.dob(text)
+    except:
+        answer = None
+    print answer
+    if answer == "1":
+         verified_phone(call_slot)
+#        aws_polly.text_to_voice("Sir.., please also confirm your mailing address with the pin code.","Raveena")
+#        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        text = recorder(call_slot)
+#        answer = response_checking.dob(text)
+    elif answer == "2":
+        verify_dob_year(call_slot)
+    elif answer == "3":
+        verify_dob_month(call_slot)
+    else:
+        repeat_dob(call_slot)
+#        aws_polly.text_to_voice("I am sorry, i didn't get that. Please use your phone touch pad and enter your date of birth. For example, if your date of birth is 31st August 1986 then press 3... 1... 0... 8... 1... 9... 8... 6... ","Raveena")
+#        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        sorry_intent(call_slot)
+#        get_dob_dtmf(call_slot)
+def repeat_dob(call_slot):
+    aws_polly.text_to_voice("I am sorry can you repeat again","Raveena")
     play_recording("output.wav",call_slot)
     try:
         text = recorder(call_slot)
@@ -103,17 +144,48 @@ def nextquestion(call_slot):
 #        play_recording("output.wav",call_slot)#        next_question(call_slot)
 #        text = recorder(call_slot)
 #        answer = response_checking.dob(text)
-        
+    elif answer == "2":
+        verify_dob_year(call_slot)
+    elif answer == "3":
+        verify_dob_month(call_slot)
+    else:
+        aws_polly.text_to_voice("I am sorry, i didn't get that. Please use your phone touch pad and enter your date of birth. For example, if your date of birth is 31st August 1986 then press 3... 1... 0... 8... 1... 9... 8... 6... ","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        sorry_intent(call_slot)
+        get_dob_dtmf(call_slot)        
+def verify_dob_month(call_slot):
+    aws_polly.text_to_voice("I am sorry, i didn't get the month. Which month were you born in?","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.take_dob_month(text)
+    except:
+        answer = None
+    if answer == "1":
+        verified_phone(call_slot)
+    else:
+        aws_polly.text_to_voice("I am sorry, i didn't get that. Please use your phone touch pad and enter your birth month if you birth month is august then press 0.. 8..","Raveena")
+        play_recording("output.wav",call_slot)#        next_question(call_slot)
+#        sorry_intent(call_slot)
+        get_dob_month_dtmf(call_slot)
+def verify_dob_year(call_slot):
+    aws_polly.text_to_voice("I am sorry, i didn't get the year. Which year were you born in?","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
+    try:
+        text = recorder(call_slot)
+        answer = response_checking.take_dob_year(text)
+    except:
+        answer = None
+    if answer == "1":
+        verified_phone(call_slot)
     else:
         aws_polly.text_to_voice("I am sorry, i didn't get that. Please use your phone touch pad and enter your date of birth. For example, if your date of birth is 31st August 1986 then press 3... 1... 0... 8... 1... 9... 8... 6... ","Raveena")
         play_recording("output.wav",call_slot)#        next_question(call_slot)
 #        sorry_intent(call_slot)
         get_dob_dtmf(call_slot)
-        
-    
 def end_the_call(call_slot):
-    play_recording("./voice/NonRPC.wav",call_slot)
-    global current_call
+    aws_polly.text_to_voice("What is the best time to speak to him","Raveena")
+    play_recording("output.wav",call_slot)#        next_question(call_slot)
     try:
         answer = recorder(call_slot)
         print answer
@@ -137,9 +209,15 @@ def recorder(call_slot):
     lib.conf_connect(call_slot, recorderslot)
     signal_while_active_call = []
     signal = 0
+    timestamp1 = time.time()
     while signal < 15:
         time.sleep(0.1)
         print lib.conf_get_signal_level(recorderslot)
+#        if time.time()-timestamp1>=4:
+#            aws_polly.text_to_voice("I am sorry, i didn't heard anything","Raveena")
+#            play_recording("output.wav",call_slot)#        next_question(call_slot)
+#            #lib.recorder_destroy(recorderid)
+            #recorder(call_slot)
 #        print lib.conf_get_signal_level(recorderslot)[0] > 0.1
         if lib.conf_get_signal_level(recorderslot)[0]>0.12:
             tone = True
@@ -169,10 +247,45 @@ def recorder(call_slot):
 
     print "#"*80
     lib.recorder_destroy(recorderid)
-    mybot = bot.BotHelper()
-    answer = mybot.generate_response()
+    mybot =bing_speach.handler()
+    answer = mybot
+#    mybot = bot.BotHelper()
+#    answer = mybot.generate_response()
     print answer,"form recorder"
     return answer
+
+def get_dob_month_dtmf(call_slot):
+    global dt
+    print dt
+    while True:
+        if len(dt) >= 2:
+            break
+        print dt
+    dob = "".join(str(x) for x in dt)
+    print dob,"$ richie rich"
+    print type(dob)
+    if dob=="08":
+        dt=[]
+        verified_phone(call_slot)
+    else:
+        dt=[]
+        unverified_dob(call_slot)
+def get_dob_year_dtmf(call_slot):
+    global dt
+    print dt
+    while True:
+        if len(dt) >= 4:
+            break
+        print dt
+    dob = "".join(str(x) for x in dt)
+    print dob,"$ richie rich"
+    print type(dob)
+    if dob=="1986":
+        dt=[]
+        verified_phone(call_slot)
+    else:
+        dt=[]
+        unverified_dob(call_slot)
 
 def get_dob_dtmf(call_slot):
     global dt
@@ -215,7 +328,7 @@ def verified_phone(call_slot):
 def verify_email(call_slot):
     global verify
     if verify < 1:
-        aws_polly.text_to_voice("Sir.., please confirm your email address.","Raveena")
+        aws_polly.text_to_voice("Sir.., please confirm your email address for example if your email address is info@gmail.com, then say india. november. foxtort, oscar at gmail dot com.","Raveena")
         play_recording("output.wav",call_slot)#        next_question(call_slot)
         try:
             text = recorder(call_slot)
@@ -404,7 +517,7 @@ try:
     lib.start()
 
 	# Put your sIP client credentials here
-    acc = lib.create_account(pj.AccountConfig(ip, "7001", "123"))
+    acc = lib.create_account(pj.AccountConfig(ip, "9002", "123"))
 
     acc_cb = MyAccountCallback(acc)
     acc.set_callback(acc_cb)

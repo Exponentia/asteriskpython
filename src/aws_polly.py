@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from pygame import mixer
+#from pygame import mixer
 import os
 from pydub import AudioSegment
 def text_to_voice(Text,VoiceId):
@@ -14,7 +14,10 @@ def text_to_voice(Text,VoiceId):
         f.write(spoken_text['AudioStream'].read())
         f.close()
     sound = AudioSegment.from_mp3("output.mp3")
-    sound.export("output.wav", format="wav")        
+    sound.export("output.wav", format="wav")   
+#    sound = AudioSegment.from_wav('input.wav')
+#    sound = sound +6
+#    sound.export("input.wav","wav")     
 
 
 def voice_to_text(voice,VoiceId,call_slot):
@@ -40,4 +43,4 @@ def voice_to_text(voice,VoiceId,call_slot):
 #os.remove('output.mp3')
         
         
-text_to_voice("Thank you that you that was nice speaking to you i Will call back at time","Raveena")
+text_to_voice("Ankur jyoti,  we are happy to welcome you to the HDFC Life family...Sir..., please note this call may be recorded for our internal quality and training purposes.,For security purpose, please confirm your Date of Birth","Raveena")

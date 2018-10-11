@@ -15,7 +15,7 @@ class BingSpeech():
     def get_speech_token(self):
         FetchTokenURI = "/sts/v1.0/issueToken"
         header = {'Ocp-Apim-Subscription-Key': self.sub_key}
-        conn = httplib.HTTPSConnection('api.cognitive.microsoft.com')
+        conn = httplib.HTTPSConnection('westus.api.cognitive.microsoft.com')
         body = ""
         conn.request("POST", FetchTokenURI, body, header)
         response = conn.getresponse()
@@ -57,7 +57,7 @@ class BingSpeech():
 		    if not data:
 			break
 		return data
-
+#    d ="https://{0}.stt.speech.microsoft.com/speech/recognition/"
 	endpoint = "https://speech.platform.bing.com/recognize/query?{0}".format(urlencode({
             "version": "3.0",
             "requestid": uuid.uuid4(),
@@ -77,9 +77,11 @@ class BingSpeech():
                             data=stream_audio_file(speech_file),
 			                stream=True,
                             headers=headers)
+        print "%"*50
+        print resp.text
         val = json.loads(resp.text)
         print val
-        print "%"*5000
+        print "%"*50
 
 #        val = json.loads(resp.text)
         # Return user utterance in text
